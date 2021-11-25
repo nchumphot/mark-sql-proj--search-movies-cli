@@ -49,7 +49,9 @@ const saveFavourite = async (queryText: string, parameters: string[]) => {
 };
 
 const navSelection = () => {
-  console.log("[1] Search\n[2] See favourites\n[3] Quit");
+  console.log(
+    "What do you want to do?\n[1] Search\n[2] See favourites\n[3] Quit"
+  );
   navNumber = question("Choose an action! [1, 2 ,3]: ");
 };
 
@@ -65,18 +67,17 @@ const runMyApp = async () => {
         mySearch = question("Search term: ");
         text = `SELECT id, name, date, runtime, budget, revenue, vote_average, votes_count
           FROM movies
-          WHERE name LIKE $1
-          OR name LIKE $2
+          WHERE LOWER(name) LIKE $1
           AND kind = 'movie'
           ORDER BY date DESC LIMIT 10;`;
         values = [
           `%${mySearch.toLowerCase()}%`,
-          `%${mySearch[0].toUpperCase() + mySearch.slice(1).toLowerCase()}%`,
+          // `%${mySearch[0].toUpperCase() + mySearch.slice(1).toLowerCase()}%`,
         ];
         await sendQuery(text, values);
         if (selectFav !== "0") {
           // Save the favourite movie
-          text = `INSERT INTO favourites (movie_id) VALUES ($1)`;
+          text = "INSERT INTO favourites (movie_id) VALUES ($1)";
           values = [`${movieIDs[parseInt(selectFav) - 1]}`];
           await saveFavourite(text, values);
           // selectFav = ""; // reset selectFav
@@ -85,6 +86,15 @@ const runMyApp = async () => {
           // Cancel query and go back to picking navNumber
           navSelection();
         }
+      } else if (navNumber === "2") {
+        console.log("Here are your saved favourites:");
+        text = `SELECT movies.id, name, EXTRACT(YEAR FROM date) AS year, runtime, budget, revenue, vote_average, votes_count
+        FROM favourites JOIN movies
+        ON favourites.movie_id = movies.id
+        ORDER BY date;`;
+        const { rows } = await client.query(text);
+        console.table(rows);
+        navSelection();
       }
     }
     // END OF MAIN BODY
