@@ -4,3 +4,4 @@ node_modules
 .vscode/last.sql
 .vscode/settings.json
 dist
+core.*
