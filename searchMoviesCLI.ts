@@ -8,8 +8,8 @@ const client = new Client({ database: "omdb" });
 console.log("Welcome to search-movies-cli!");
 let text: string;
 let mySearch: string = "";
-let isRunning: boolean = true;
-let repeatSearch: boolean = true;
+// let isRunning: boolean = true;
+// let repeatSearch: boolean = true;
 
 const connectToDb = async (): Promise<void> => {
   try {
@@ -26,27 +26,24 @@ const sendQuery = async (queryText: string): Promise<void> => {
   console.table(rows);
 };
 
-connectToDb().then(() => {
-  while (isRunning) {
+const runMyApp = async () => {
+  try {
+    await connectToDb();
     mySearch = question("Type your movie search here (or 'q' to quit): ");
-    if (mySearch === "q") {
-      isRunning = false;
-      client
-        .end()
-        .then(() =>
-          console.log(
-            "Disconnected from the database. \nThank you for using search-movies-cli!"
-          )
-        );
-    } else {
+    while (mySearch !== "q") {
       text = `SELECT *
-        FROM movies
-        WHERE name LIKE '%${mySearch.toLowerCase()}%'
-        OR name LIKE '%${
-          mySearch[0].toUpperCase() + mySearch.slice(1).toLowerCase()
-        }%'
-        ORDER BY date LIMIT 10;`;
-      sendQuery(text);
+      FROM movies
+      WHERE name LIKE '%${mySearch.toLowerCase()}%'
+      OR name LIKE '%${
+        mySearch[0].toUpperCase() + mySearch.slice(1).toLowerCase()
+      }%'
+      ORDER BY date LIMIT 10;`;
+      await sendQuery(text);
+      mySearch = question("Type your movie search here (or 'q' to quit): ");
     }
+  } finally {
+    await client.end();
   }
-});
+};
+
+runMyApp();
