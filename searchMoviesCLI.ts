@@ -7,6 +7,7 @@ import { Client } from "pg";
 const client = new Client({ database: "omdb" });
 console.log("Welcome to search-movies-cli!");
 let text: string;
+let values: string[];
 let mySearch: string = "";
 // let isRunning: boolean = true;
 // let repeatSearch: boolean = true;
@@ -31,13 +32,16 @@ const runMyApp = async () => {
     await connectToDb();
     mySearch = question("Type your movie search here (or 'q' to quit): ");
     while (mySearch !== "q") {
-      text = `SELECT *
+      text = `SELECT id, name, date, runtime, budget, revenue, vote_average, votes_count
       FROM movies
-      WHERE name LIKE '%${mySearch.toLowerCase()}%'
-      OR name LIKE '%${
-        mySearch[0].toUpperCase() + mySearch.slice(1).toLowerCase()
-      }%'
-      ORDER BY date LIMIT 10;`;
+      WHERE name LIKE $1
+      OR name LIKE $2
+      AND kind = 'movie'
+      ORDER BY date DESC LIMIT 10;`;
+      values = [
+        `'%${mySearch.toLowerCase()}%'`,
+        `'%${mySearch[0].toUpperCase() + mySearch.slice(1).toLowerCase()}%'`,
+      ];
       await sendQuery(text);
       mySearch = question("Type your movie search here (or 'q' to quit): ");
     }
